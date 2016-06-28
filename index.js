@@ -87,9 +87,14 @@ module.exports = function(options){
     if(typeof webkitRequestFileSystem !== 'undefined'){
       window.requestFileSystem = webkitRequestFileSystem;
       window.FileTransfer = function FileTransfer(){};
-      FileTransfer.prototype.download = function download(url,file,win,fail) {
+      FileTransfer.prototype.download = function download(url,file,win,fail,trustAllHosts,options) {
         var xhr = new XMLHttpRequest();
+        
         xhr.open('GET', url);
+        Object.keys(options.headers).map(function(key) {
+          var val = options.headers[key]
+          xhr.setRequestHeader(key, val);
+        });
         xhr.responseType = "blob";
         xhr.onreadystatechange = function(onSuccess, onError, cb) {
           if (xhr.readyState == 4) {
@@ -100,6 +105,7 @@ module.exports = function(options){
             }
           }
         };
+        xhr.onprogress = this.onprogress
         xhr.send();
         return xhr;
       };
@@ -518,7 +524,6 @@ module.exports = function(options){
           if(options.debug) console.log('FileTransfer Error: '+serverUrl,err);
           reject(err);
         } else {
-
     		  var transferJob = {
     		    fileTransfer:ft,
     		    isDownload:isDownload,
